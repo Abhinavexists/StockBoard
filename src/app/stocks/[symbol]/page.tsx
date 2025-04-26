@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useParams } from "next/navigation"
 import { ArrowUpRight, ArrowDownRight, Star, RefreshCw, Info } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -37,7 +37,7 @@ function StockDetails() {
     }
   }
 
-  const fetchStockData = async () => {
+  const fetchStockData = useCallback(async () => {
     setIsRefreshing(true)
     try {
       const stockData = await getStockQuote(symbol)
@@ -60,7 +60,7 @@ function StockDetails() {
       setIsRefreshing(false)
       setIsLoading(false)
     }
-  }
+  }, [symbol, timeframe]);
 
   useEffect(() => {
     setIsLoading(true)

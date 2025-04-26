@@ -6,7 +6,8 @@ import {
   useState, 
   useEffect, 
   ReactNode,
-  useRef
+  useRef,
+  useCallback
 } from "react"
 import { 
   StockData, 
@@ -118,7 +119,7 @@ export function StockProvider({ children }: { children: ReactNode }) {
   }, [priceAlerts])
 
   // Refresh all stocks data
-  const refreshStocks = async () => {
+  const refreshStocks = useCallback(async () => {
     console.log("Refreshing stocks data...")
     setIsLoading(true)
     try {
@@ -158,7 +159,7 @@ export function StockProvider({ children }: { children: ReactNode }) {
         console.error("Stopped polling due to repeated API failures.")
       }
     }
-  }
+  }, [watchlist]);
   
   // Load trending stocks on mount
   useEffect(() => {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { SiteWrapper } from "@/components/site-wrapper"
 import { StockProvider, useStocks } from "@/context/stock-context"
 import { StockData } from "@/lib/api"
@@ -46,12 +46,8 @@ function AlertManager() {
   const [targetPrice, setTargetPrice] = useState("")
   const [alertType, setAlertType] = useState<"above" | "below">("above")
   
-  // Initial load of alert stocks
-  useEffect(() => {
-    loadAlertStocks()
-  }, [priceAlerts])
-  
-  const loadAlertStocks = async () => {
+  // Load alert stocks function
+  const loadAlertStocks = useCallback(async () => {
     setIsLoading(true)
     try {
       const stocks = await getAlertedStocks()
@@ -61,7 +57,12 @@ function AlertManager() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [getAlertedStocks]);
+  
+  // Initial load of alert stocks
+  useEffect(() => {
+    loadAlertStocks()
+  }, [priceAlerts, loadAlertStocks])
   
   const handleCreateAlert = () => {
     if (selectedSymbol && targetPrice) {

@@ -101,7 +101,7 @@ function StockComparisonManager() {
     }
     
     updateAllHistoricalData()
-  }, [timeframe, comparedStocks.length])
+  }, [timeframe, comparedStocks])
   
   // Prepare data for the comparison chart
   const prepareChartData = () => {
@@ -126,7 +126,7 @@ function StockComparisonManager() {
     
     // Create combined data points
     return firstStockData.map((point, index) => {
-      const dataPoint: any = {
+      const dataPoint: Record<string, string | number> = {
         date: point.date,
       }
       
