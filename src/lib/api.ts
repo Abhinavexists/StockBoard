@@ -188,6 +188,14 @@ function generateRandomHistoricalData(
   return data;
 }
 
+// Define interfaces for API responses
+interface FinnhubSearchResultItem {
+  symbol: string;
+  description: string;
+  type: string;
+  displaySymbol?: string;
+}
+
 // Get quote for a specific stock symbol
 export async function getStockQuote(symbol: string): Promise<StockData | null> {
   try {
@@ -241,7 +249,7 @@ export async function searchStocks(query: string): Promise<SearchResult[]> {
       return [];
     }
     
-    const results: SearchResult[] = data.result.map((match: any) => ({
+    const results: SearchResult[] = data.result.map((match: FinnhubSearchResultItem) => ({
       symbol: match.symbol,
       name: match.description,
       type: match.type,

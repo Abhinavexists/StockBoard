@@ -130,7 +130,7 @@ function StockComparisonManager() {
         date: point.date,
       }
       
-      Object.keys(historicalData).forEach((symbol, symbolIndex) => {
+      Object.keys(historicalData).forEach((symbol) => {
         const data = historicalData[symbol]
         if (data && index < data.length) {
           if (normalizeData) {
@@ -157,14 +157,25 @@ function StockComparisonManager() {
     }
   }
   
+  // Define proper types for the tooltip
+  interface TooltipProps {
+    active?: boolean;
+    payload?: Array<{
+      value: number;
+      name: string;
+      color: string;
+    }>;
+    label?: string;
+  }
+  
   // Custom tooltip formatter
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-background border p-2 rounded shadow-lg">
           <p className="text-sm font-medium">{label}</p>
           <div className="space-y-1 mt-1">
-            {payload.map((entry: any, index: number) => (
+            {payload.map((entry, index) => (
               <div key={`item-${index}`} className="flex items-center gap-2">
                 <div 
                   className="h-2 w-2 rounded-full" 

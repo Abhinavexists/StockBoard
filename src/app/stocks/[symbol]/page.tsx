@@ -72,7 +72,7 @@ function StockDetails() {
     }, 15000)
     
     return () => clearInterval(intervalId)
-  }, [symbol, timeframe])
+  }, [symbol, timeframe, fetchStockData])
 
   // Handle timeframe change
   const handleTimeframeChange = async (value: string) => {
@@ -298,7 +298,7 @@ function StockDetails() {
               variants={itemVariants}
               whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
             >
-              <p className="text-muted-foreground text-sm">Day's Range</p>
+              <p className="text-muted-foreground text-sm">Day&apos;s Range</p>
               <p className="font-medium">
                 ${safeToFixed(stock.low)} - ${safeToFixed(stock.high)}
               </p>

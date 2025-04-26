@@ -123,10 +123,7 @@ export function StockChart({ data, symbol }: StockChartProps) {
 
   // Pick a color based on the trend
   const trendColor = isPositiveTrend ? "rgba(16, 185, 129, 1)" : "rgba(239, 68, 68, 1)"
-  const trendColorArea = isPositiveTrend
-    ? "rgba(16, 185, 129, 0.2)"
-    : "rgba(239, 68, 68, 0.2)"
-
+  
   // Chart animation variants
   const chartVariants = {
     hidden: { opacity: 0, scale: 0.95 },

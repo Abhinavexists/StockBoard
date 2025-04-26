@@ -18,6 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { StockData } from "@/lib/api"
 
 function PortfolioManager() {
   const { 
@@ -32,7 +33,7 @@ function PortfolioManager() {
   } = useStocks()
   
   const [newPortfolioName, setNewPortfolioName] = useState("")
-  const [portfolioStocks, setPortfolioStocks] = useState<any[]>([])
+  const [portfolioStocks, setPortfolioStocks] = useState<StockData[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -136,7 +137,7 @@ function PortfolioManager() {
             
             {portfolios.length === 0 ? (
               <div className="text-center py-8 px-4">
-                <p className="text-muted-foreground mb-4">You don't have any portfolios yet</p>
+                <p className="text-muted-foreground mb-4">You don&apos;t have any portfolios yet</p>
                 <Button variant="outline" onClick={() => setIsDialogOpen(true)}>
                   Create your first portfolio
                 </Button>

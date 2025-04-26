@@ -60,73 +60,106 @@ interface StockContextType {
 const StockContext = createContext<StockContextType | undefined>(undefined)
 
 export function StockProvider({ children }: { children: ReactNode }) {
+  // State for trending stocks
   const [trendingStocks, setTrendingStocks] = useState<StockData[]>([])
-  const [watchlist, setWatchlist] = useState<string[]>([])
+  const [watchlist, setWatchlist] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('watchlist')
+      return saved ? JSON.parse(saved) : []
+    }
+    return []
+  })
   const [watchlistStocks, setWatchlistStocks] = useState<StockData[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [portfolios, setPortfolios] = useState<Portfolio[]>([])
-  const [activePortfolio, setActivePortfolio] = useState<Portfolio | null>(null)
-  const [priceAlerts, setPriceAlerts] = useState<PriceAlert[]>([])
-  const [triggeredAlerts, setTriggeredAlerts] = useState<PriceAlert[]>([])
-  const pollingRef = useRef<NodeJS.Timeout | null>(null)
-  const failureCountRef = useRef(0)
-  const MAX_FAILURES = 5
+  const [isLoading, setIsLoading] = useState(false)
   const [apiError, setApiError] = useState(false)
-
-  // Initialize watchlist from localStorage
-  useEffect(() => {
-    const savedWatchlist = localStorage.getItem("watchlist")
-    if (savedWatchlist) {
-      try {
-        setWatchlist(JSON.parse(savedWatchlist))
-      } catch (error) {
-        console.error("Error parsing watchlist from localStorage:", error)
-        localStorage.removeItem("watchlist")
-      }
+  
+  // Portfolios state
+  const [portfolios, setPortfolios] = useState<Portfolio[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('portfolios')
+      return saved ? JSON.parse(saved) : []
     }
-  }, [])
-
-  // Initialize portfolios from localStorage
-  useEffect(() => {
-    const savedPortfolios = localStorage.getItem("portfolios")
-    if (savedPortfolios) {
-      try {
-        setPortfolios(JSON.parse(savedPortfolios))
-      } catch (error) {
-        console.error("Error parsing portfolios from localStorage:", error)
-        localStorage.removeItem("portfolios")
-      }
+    return []
+  })
+  const [activePortfolio, setActivePortfolio] = useState<Portfolio | null>(null)
+  
+  // Price alerts state
+  const [priceAlerts, setPriceAlerts] = useState<PriceAlert[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('priceAlerts')
+      return saved ? JSON.parse(saved) : []
     }
-  }, [])
-
-  // Initialize price alerts from localStorage
+    return []
+  })
+  const [triggeredAlerts, setTriggeredAlerts] = useState<PriceAlert[]>([])
+  
+  // Reference to track API failure count and polling interval
+  const failureCountRef = useRef(0)
+  const pollingRef = useRef<NodeJS.Timeout | null>(null)
+  const MAX_FAILURES = 3 // Stop polling after this many consecutive failures
+  
+  // Save data to localStorage when it changes
   useEffect(() => {
-    const savedAlerts = localStorage.getItem("priceAlerts")
-    if (savedAlerts) {
-      try {
-        setPriceAlerts(JSON.parse(savedAlerts))
-      } catch (error) {
-        console.error("Error parsing price alerts from localStorage:", error)
-        localStorage.removeItem("priceAlerts")
-      }
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('watchlist', JSON.stringify(watchlist))
     }
-  }, [])
-
-  // Save watchlist to localStorage when it changes
-  useEffect(() => {
-    localStorage.setItem("watchlist", JSON.stringify(watchlist))
   }, [watchlist])
-
-  // Save portfolios to localStorage when they change
+  
   useEffect(() => {
-    localStorage.setItem("portfolios", JSON.stringify(portfolios))
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('portfolios', JSON.stringify(portfolios))
+    }
   }, [portfolios])
-
-  // Save price alerts to localStorage when they change
+  
   useEffect(() => {
-    localStorage.setItem("priceAlerts", JSON.stringify(priceAlerts))
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('priceAlerts', JSON.stringify(priceAlerts))
+    }
   }, [priceAlerts])
 
+  // Refresh all stocks data
+  const refreshStocks = async () => {
+    console.log("Refreshing stocks data...")
+    setIsLoading(true)
+    try {
+      const trending = await getTrendingStocks()
+      console.log("Trending stocks loaded:", trending)
+      if (Array.isArray(trending) && trending.length > 0) {
+        setTrendingStocks(prev => {
+          const prevStr = JSON.stringify(prev)
+          const nextStr = JSON.stringify(trending)
+          if (prevStr !== nextStr) return trending
+          return prev
+        })
+        failureCountRef.current = 0 // reset on success
+        setApiError(false)
+      } else {
+        console.error("Trending stocks API returned invalid data:", trending)
+        failureCountRef.current++
+      }
+      if (watchlist.length > 0) {
+        const stocks = await Promise.all(
+          watchlist.map(async (symbol) => {
+            const stock = await getStockQuote(symbol)
+            return stock
+          })
+        )
+        setWatchlistStocks(stocks.filter((stock): stock is StockData => stock !== null))
+      }
+    } catch (error) {
+      console.error("Error refreshing stocks:", error)
+      failureCountRef.current++
+    } finally {
+      setIsLoading(false)
+      if (failureCountRef.current >= MAX_FAILURES && pollingRef.current) {
+        clearInterval(pollingRef.current)
+        pollingRef.current = null
+        setApiError(true)
+        console.error("Stopped polling due to repeated API failures.")
+      }
+    }
+  }
+  
   // Load trending stocks on mount
   useEffect(() => {
     console.log("StockProvider mounted - loading initial data")
@@ -139,7 +172,7 @@ export function StockProvider({ children }: { children: ReactNode }) {
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current)
     }
-  }, [])
+  }, [refreshStocks])
 
   // Update watchlist stocks whenever watchlist changes
   useEffect(() => {
@@ -194,49 +227,6 @@ export function StockProvider({ children }: { children: ReactNode }) {
       setTriggeredAlerts(prev => [...prev, ...newTriggeredAlerts])
     }
   }, [watchlistStocks, priceAlerts])
-
-  // Refresh all stocks data
-  const refreshStocks = async () => {
-    console.log("Refreshing stocks data...")
-    setIsLoading(true)
-    try {
-      const trending = await getTrendingStocks()
-      console.log("Trending stocks loaded:", trending)
-      if (Array.isArray(trending) && trending.length > 0) {
-        setTrendingStocks(prev => {
-          const prevStr = JSON.stringify(prev)
-          const nextStr = JSON.stringify(trending)
-          if (prevStr !== nextStr) return trending
-          return prev
-        })
-        failureCountRef.current = 0 // reset on success
-        setApiError(false)
-      } else {
-        console.error("Trending stocks API returned invalid data:", trending)
-        failureCountRef.current++
-      }
-      if (watchlist.length > 0) {
-        const stocks = await Promise.all(
-          watchlist.map(async (symbol) => {
-            const stock = await getStockQuote(symbol)
-            return stock
-          })
-        )
-        setWatchlistStocks(stocks.filter((stock): stock is StockData => stock !== null))
-      }
-    } catch (error) {
-      console.error("Error refreshing stocks:", error)
-      failureCountRef.current++
-    } finally {
-      setIsLoading(false)
-      if (failureCountRef.current >= MAX_FAILURES && pollingRef.current) {
-        clearInterval(pollingRef.current)
-        pollingRef.current = null
-        setApiError(true)
-        console.error("Stopped polling due to repeated API failures.")
-      }
-    }
-  }
 
   // Manual retry/reset function
   const resetAndRetryStocks = () => {
