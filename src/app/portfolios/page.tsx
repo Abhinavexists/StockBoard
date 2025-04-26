@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { StockSearch } from "@/components/stock-search"
 import { StockCard } from "@/components/stock-card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { PlusCircle, Trash2, Briefcase, CirclePlus, Edit } from "lucide-react"
+import { PlusCircle, Trash2, Briefcase, Edit } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Dialog,

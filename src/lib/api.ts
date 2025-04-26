@@ -31,14 +31,19 @@ export interface SearchResult {
   currency: string;
 }
 
-// Replace with your Alpha Vantage API key
-const API_KEY = "demo"; // Using demo key - for production use your own API key
+// Base URLs - using only Finnhub API
+const FINNHUB_BASE_URL = "https://finnhub.io/api/v1";
+const FINNHUB_API_KEY = "d06fke9r01qg26s7lp40d06fke9r01qg26s7lp4g"; // Your Finnhub API key
 
-// Base URLs
-const BASE_URL = "https://www.alphavantage.co/query";
+// Popular stock symbols to use for trending stocks
+const POPULAR_SYMBOLS = [
+  "AAPL", "MSFT", "GOOGL", "AMZN", "TSLA", 
+  "META", "NVDA", "JPM", "V", "WMT",
+  "NFLX", "PYPL", "DIS", "AMD", "SBUX", "INTC"
+];
 
-// Mock data for demo purposes
-const MOCK_TRENDING_STOCKS: StockData[] = [
+// Fallback data for when the API fails - this will ensure we always have something to show
+const FALLBACK_STOCKS: StockData[] = [
   {
     symbol: "AAPL",
     name: "Apple Inc.",
@@ -142,115 +147,11 @@ const MOCK_TRENDING_STOCKS: StockData[] = [
     low: 206.11,
     open: 206.42,
     previousClose: 206.15,
-  },
-  {
-    symbol: "V",
-    name: "Visa Inc.",
-    price: 292.16,
-    change: -1.24,
-    changePercent: -0.42,
-    volume: 6432198,
-    marketCap: 586000000000,
-    high: 294.53,
-    low: 291.02,
-    open: 293.45,
-    previousClose: 293.40,
-  },
-  {
-    symbol: "WMT",
-    name: "Walmart Inc.",
-    price: 79.54,
-    change: 0.86,
-    changePercent: 1.09,
-    volume: 9876543,
-    marketCap: 642000000000,
-    high: 79.98,
-    low: 78.87,
-    open: 78.92,
-    previousClose: 78.68,
-  },
-  {
-    symbol: "NFLX",
-    name: "Netflix, Inc.",
-    price: 686.32,
-    change: 12.84,
-    changePercent: 1.91,
-    volume: 4327865,
-    marketCap: 298000000000,
-    high: 689.45,
-    low: 675.21,
-    open: 675.32,
-    previousClose: 673.48,
-  },
-  {
-    symbol: "PYPL",
-    name: "PayPal Holdings, Inc.",
-    price: 62.35,
-    change: -1.23,
-    changePercent: -1.93,
-    volume: 10765432,
-    marketCap: 66700000000,
-    high: 63.87,
-    low: 61.98,
-    open: 63.42,
-    previousClose: 63.58,
-  },
-  {
-    symbol: "DIS",
-    name: "The Walt Disney Company",
-    price: 98.76,
-    change: 0.54,
-    changePercent: 0.55,
-    volume: 7654321,
-    marketCap: 180000000000,
-    high: 99.32,
-    low: 98.01,
-    open: 98.23,
-    previousClose: 98.22,
-  },
-  {
-    symbol: "AMD",
-    name: "Advanced Micro Devices, Inc.",
-    price: 165.23,
-    change: 5.87,
-    changePercent: 3.68,
-    volume: 35789123,
-    marketCap: 267000000000,
-    high: 167.45,
-    low: 160.34,
-    open: 160.56,
-    previousClose: 159.36,
-  },
-  {
-    symbol: "SBUX",
-    name: "Starbucks Corporation",
-    price: 96.32,
-    change: -0.76,
-    changePercent: -0.78,
-    volume: 6543210,
-    marketCap: 109000000000,
-    high: 97.43,
-    low: 95.87,
-    open: 97.12,
-    previousClose: 97.08,
-  },
-  {
-    symbol: "INTC",
-    name: "Intel Corporation",
-    price: 30.75,
-    change: -0.45,
-    changePercent: -1.44,
-    volume: 28765432,
-    marketCap: 130000000000,
-    high: 31.24,
-    low: 30.42,
-    open: 31.01,
-    previousClose: 31.20,
   }
 ];
 
-// Mock historical data for demo purposes
-export function generateMockHistoricalData(
+// Generate random historical data when real data is unavailable
+function generateRandomHistoricalData(
   symbol: string,
   days = 30
 ): StockHistoricalData[] {
@@ -290,31 +191,36 @@ export function generateMockHistoricalData(
 // Get quote for a specific stock symbol
 export async function getStockQuote(symbol: string): Promise<StockData | null> {
   try {
-    // In a real app, you'd use this to fetch from Alpha Vantage
-    // const url = `${BASE_URL}?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${API_KEY}`;
-    // const response = await fetch(url);
-    // const data = await response.json();
+    const quoteUrl = `${FINNHUB_BASE_URL}/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`;
+    const profileUrl = `${FINNHUB_BASE_URL}/stock/profile2?symbol=${symbol}&token=${FINNHUB_API_KEY}`;
     
-    // For demo purposes, use mock data
-    const stock = MOCK_TRENDING_STOCKS.find(
-      (s) => s.symbol.toUpperCase() === symbol.toUpperCase()
-    );
+    const [quoteResponse, profileResponse] = await Promise.all([
+      fetch(quoteUrl),
+      fetch(profileUrl)
+    ]);
     
-    if (!stock) {
-      // Create a new random stock if not found in mocks
-      const price = Math.random() * 500 + 50;
-      const change = (Math.random() - 0.5) * 10;
-      return {
-        symbol: symbol.toUpperCase(),
-        name: `${symbol.toUpperCase()} Inc.`,
-        price: parseFloat(price.toFixed(2)),
-        change: parseFloat(change.toFixed(2)),
-        changePercent: parseFloat((change / price * 100).toFixed(2)),
-        volume: Math.floor(Math.random() * 10000000) + 1000000,
-      };
+    const quoteData = await quoteResponse.json();
+    const profileData = await profileResponse.json();
+    
+    // Check if we got valid response
+    if (!quoteData || (quoteData.c === 0 && quoteData.h === 0)) {
+      console.error("No data found for symbol:", symbol);
+      return null;
     }
     
-    return stock;
+    return {
+      symbol: symbol,
+      name: profileData.name || symbol,
+      price: quoteData.c,
+      change: quoteData.d,
+      changePercent: quoteData.dp,
+      volume: quoteData.v,
+      marketCap: profileData.marketCapitalization ? profileData.marketCapitalization * 1000000 : undefined,
+      high: quoteData.h,
+      low: quoteData.l,
+      open: quoteData.o,
+      previousClose: quoteData.pc
+    };
   } catch (error) {
     console.error("Error fetching stock quote:", error);
     return null;
@@ -326,26 +232,22 @@ export async function searchStocks(query: string): Promise<SearchResult[]> {
   if (!query || query.length < 1) return [];
   
   try {
-    // In a real app, you'd use:
-    // const url = `${BASE_URL}?function=SYMBOL_SEARCH&keywords=${query}&apikey=${API_KEY}`;
-    // const response = await fetch(url);
-    // const data = await response.json();
+    const url = `${FINNHUB_BASE_URL}/search?q=${query}&token=${FINNHUB_API_KEY}`;
+    const response = await fetch(url);
+    const data = await response.json();
     
-    // For demo purposes, filter mock data
-    const results = MOCK_TRENDING_STOCKS
-      .filter(
-        (stock) =>
-          stock.symbol.toUpperCase().includes(query.toUpperCase()) ||
-          stock.name.toUpperCase().includes(query.toUpperCase())
-      )
-      .map((stock) => ({
-        symbol: stock.symbol,
-        name: stock.name,
-        type: "Equity",
-        region: "United States",
-        currency: "USD",
-      }));
+    if (!data.result || !Array.isArray(data.result)) {
+      console.error("No search results found");
+      return [];
+    }
     
+    const results: SearchResult[] = data.result.map((match: any) => ({
+      symbol: match.symbol,
+      name: match.description,
+      type: match.type,
+      region: "US", // Finnhub doesn't provide this directly
+      currency: "USD", // Finnhub doesn't provide this directly
+    }));
     return results;
   } catch (error) {
     console.error("Error searching stocks:", error);
@@ -355,17 +257,59 @@ export async function searchStocks(query: string): Promise<SearchResult[]> {
 
 // Get trending stocks
 export async function getTrendingStocks(): Promise<StockData[]> {
-  console.log("getTrendingStocks called")
-  console.log("MOCK_TRENDING_STOCKS:", MOCK_TRENDING_STOCKS)
+  console.log("Getting trending stocks from Finnhub API");
   
-  // In a real app, you'd fetch this data from an API
-  // For demo purposes, return mock data with a slight delay to simulate network latency
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log("Returning mock trending stocks:", MOCK_TRENDING_STOCKS)
-      resolve(MOCK_TRENDING_STOCKS);
-    }, 500);
-  });
+  try {
+    const stocksPromises = POPULAR_SYMBOLS.slice(0, 10).map(async (symbol) => {
+      const quoteUrl = `${FINNHUB_BASE_URL}/quote?symbol=${symbol}&token=${FINNHUB_API_KEY}`;
+      const profileUrl = `${FINNHUB_BASE_URL}/stock/profile2?symbol=${symbol}&token=${FINNHUB_API_KEY}`;
+      
+      try {
+        const [quoteResponse, profileResponse] = await Promise.all([
+          fetch(quoteUrl),
+          fetch(profileUrl)
+        ]);
+        
+        const quoteData = await quoteResponse.json();
+        const profileData = await profileResponse.json();
+        
+        // Check if we got valid response
+        if (quoteData.c === 0 && quoteData.h === 0) {
+          throw new Error(`No valid data for ${symbol}`);
+        }
+        
+        return {
+          symbol: symbol,
+          name: profileData.name || symbol,
+          price: quoteData.c,
+          change: quoteData.d,
+          changePercent: quoteData.dp,
+          volume: quoteData.v,
+          marketCap: profileData.marketCapitalization ? profileData.marketCapitalization * 1000000 : undefined,
+          high: quoteData.h,
+          low: quoteData.l,
+          open: quoteData.o,
+          previousClose: quoteData.pc
+        };
+      } catch (err) {
+        console.error(`Error fetching data for ${symbol}:`, err);
+        return null;
+      }
+    });
+    
+    const results = await Promise.all(stocksPromises);
+    const validResults = results.filter(Boolean) as StockData[];
+    
+    if (validResults.length === 0) {
+      console.error("No valid data returned from API, using fallback data");
+      return FALLBACK_STOCKS;
+    }
+    
+    return validResults;
+  } catch (error) {
+    console.error("Error fetching trending stocks, using fallback data:", error);
+    return FALLBACK_STOCKS;
+  }
 }
 
 // Get historical data for a stock
@@ -374,17 +318,53 @@ export async function getHistoricalData(
   interval: "daily" | "weekly" | "monthly" = "daily"
 ): Promise<StockHistoricalData[]> {
   try {
-    // In a real app, you'd use:
-    // const func = interval === "daily" ? "TIME_SERIES_DAILY" : interval === "weekly" ? "TIME_SERIES_WEEKLY" : "TIME_SERIES_MONTHLY";
-    // const url = `${BASE_URL}?function=${func}&symbol=${symbol}&apikey=${API_KEY}`;
-    // const response = await fetch(url);
-    // const data = await response.json();
-
-    // For demo purposes, generate mock data
-    const days = interval === "daily" ? 30 : interval === "weekly" ? 52 : 24;
-    return generateMockHistoricalData(symbol, days);
+    // Convert to Finnhub's interval naming convention
+    const resolution = interval === "daily" ? "D" : interval === "weekly" ? "W" : "M";
+    
+    // Get data for previous year
+    const to = Math.floor(Date.now() / 1000);
+    const from = to - 60 * 60 * 24 * 365; // 1 year ago
+    
+    const url = `${FINNHUB_BASE_URL}/stock/candle?symbol=${symbol}&resolution=${resolution}&from=${from}&to=${to}&token=${FINNHUB_API_KEY}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (!data.c || !data.t || data.s !== 'ok') {
+      console.error(`No ${interval} data found for symbol:`, symbol);
+      return generateRandomHistoricalData(symbol);
+    }
+    
+    const historicalData: StockHistoricalData[] = [];
+    
+    // Process the data
+    for (let i = 0; i < data.t.length; i++) {
+      // Make sure all required values exist before accessing them
+      if (data.t[i] === undefined || data.o[i] === undefined || 
+          data.h[i] === undefined || data.l[i] === undefined || 
+          data.c[i] === undefined || data.v[i] === undefined) {
+        console.warn(`Skipping invalid data point at index ${i} for symbol ${symbol}`);
+        continue;
+      }
+      
+      const timestamp = data.t[i] * 1000; // Convert to milliseconds
+      const date = new Date(timestamp);
+      
+      historicalData.push({
+        date: date.toISOString().split('T')[0],
+        open: data.o[i],
+        high: data.h[i],
+        low: data.l[i],
+        close: data.c[i],
+        volume: data.v[i]
+      });
+    }
+    
+    // Sort by date, most recent first
+    historicalData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    return historicalData;
   } catch (error) {
     console.error(`Error fetching ${interval} data:`, error);
-    return [];
+    return generateRandomHistoricalData(symbol);
   }
-} 
+}

@@ -5,7 +5,8 @@ import {
   useContext, 
   useState, 
   useEffect, 
-  ReactNode 
+  ReactNode,
+  useRef
 } from "react"
 import { 
   StockData, 
@@ -52,6 +53,8 @@ interface StockContextType {
   getAlertedStocks: () => Promise<StockData[]>
   clearTriggeredAlerts: () => void
   triggeredAlerts: PriceAlert[]
+  apiError: boolean
+  resetAndRetryStocks: () => void
 }
 
 const StockContext = createContext<StockContextType | undefined>(undefined)
@@ -65,6 +68,10 @@ export function StockProvider({ children }: { children: ReactNode }) {
   const [activePortfolio, setActivePortfolio] = useState<Portfolio | null>(null)
   const [priceAlerts, setPriceAlerts] = useState<PriceAlert[]>([])
   const [triggeredAlerts, setTriggeredAlerts] = useState<PriceAlert[]>([])
+  const pollingRef = useRef<NodeJS.Timeout | null>(null)
+  const failureCountRef = useRef(0)
+  const MAX_FAILURES = 5
+  const [apiError, setApiError] = useState(false)
 
   // Initialize watchlist from localStorage
   useEffect(() => {
@@ -124,13 +131,14 @@ export function StockProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     console.log("StockProvider mounted - loading initial data")
     refreshStocks()
-    
-    // Set up polling for stock updates (every 15 seconds)
-    const intervalId = setInterval(() => {
+    setApiError(false)
+    if (pollingRef.current) clearInterval(pollingRef.current)
+    pollingRef.current = setInterval(() => {
       refreshStocks()
     }, 15000)
-    
-    return () => clearInterval(intervalId)
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current)
+    }
   }, [])
 
   // Update watchlist stocks whenever watchlist changes
@@ -195,12 +203,18 @@ export function StockProvider({ children }: { children: ReactNode }) {
       const trending = await getTrendingStocks()
       console.log("Trending stocks loaded:", trending)
       if (Array.isArray(trending) && trending.length > 0) {
-        setTrendingStocks(trending)
+        setTrendingStocks(prev => {
+          const prevStr = JSON.stringify(prev)
+          const nextStr = JSON.stringify(trending)
+          if (prevStr !== nextStr) return trending
+          return prev
+        })
+        failureCountRef.current = 0 // reset on success
+        setApiError(false)
       } else {
         console.error("Trending stocks API returned invalid data:", trending)
+        failureCountRef.current++
       }
-      
-      // Also refresh watchlist stocks
       if (watchlist.length > 0) {
         const stocks = await Promise.all(
           watchlist.map(async (symbol) => {
@@ -208,13 +222,31 @@ export function StockProvider({ children }: { children: ReactNode }) {
             return stock
           })
         )
-        
         setWatchlistStocks(stocks.filter((stock): stock is StockData => stock !== null))
       }
     } catch (error) {
       console.error("Error refreshing stocks:", error)
+      failureCountRef.current++
     } finally {
       setIsLoading(false)
+      if (failureCountRef.current >= MAX_FAILURES && pollingRef.current) {
+        clearInterval(pollingRef.current)
+        pollingRef.current = null
+        setApiError(true)
+        console.error("Stopped polling due to repeated API failures.")
+      }
+    }
+  }
+
+  // Manual retry/reset function
+  const resetAndRetryStocks = () => {
+    failureCountRef.current = 0
+    setApiError(false)
+    refreshStocks()
+    if (!pollingRef.current) {
+      pollingRef.current = setInterval(() => {
+        refreshStocks()
+      }, 15000)
     }
   }
 
@@ -374,6 +406,8 @@ export function StockProvider({ children }: { children: ReactNode }) {
         getAlertedStocks,
         clearTriggeredAlerts,
         triggeredAlerts,
+        apiError,
+        resetAndRetryStocks,
       }}
     >
       {children}

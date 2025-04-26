@@ -30,6 +30,23 @@ interface CustomTooltipProps {
 const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload
+    
+    // Helper function to safely format numbers
+    const safeToFixed = (value: number | undefined | null, digits = 2) => {
+      if (typeof value === "number" && !isNaN(value)) {
+        return value.toFixed(digits)
+      }
+      return "-"
+    }
+    
+    // Helper function to safely format large numbers
+    const safeLocaleString = (value: number | undefined | null) => {
+      if (typeof value === "number" && !isNaN(value)) {
+        return value.toLocaleString()
+      }
+      return "-"
+    }
+    
     return (
       <motion.div 
         className="custom-tooltip bg-background border border-border p-3 rounded shadow-md"
@@ -40,15 +57,15 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
         <p className="font-medium">{label}</p>
         <div className="grid grid-cols-2 gap-x-8 gap-y-1 mt-2 text-sm">
           <p className="text-muted-foreground">Open:</p>
-          <p className="text-right font-medium">${data.open.toFixed(2)}</p>
+          <p className="text-right font-medium">${safeToFixed(data.open)}</p>
           <p className="text-muted-foreground">Close:</p>
-          <p className="text-right font-medium">${data.close.toFixed(2)}</p>
+          <p className="text-right font-medium">${safeToFixed(data.close)}</p>
           <p className="text-muted-foreground">High:</p>
-          <p className="text-right font-medium">${data.high.toFixed(2)}</p>
+          <p className="text-right font-medium">${safeToFixed(data.high)}</p>
           <p className="text-muted-foreground">Low:</p>
-          <p className="text-right font-medium">${data.low.toFixed(2)}</p>
+          <p className="text-right font-medium">${safeToFixed(data.low)}</p>
           <p className="text-muted-foreground">Volume:</p>
-          <p className="text-right font-medium">{data.volume.toLocaleString()}</p>
+          <p className="text-right font-medium">{safeLocaleString(data.volume)}</p>
         </div>
       </motion.div>
     )

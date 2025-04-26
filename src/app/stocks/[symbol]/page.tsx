@@ -8,7 +8,7 @@ import { StockData, StockHistoricalData, getStockQuote, getHistoricalData } from
 import { SiteWrapper } from "@/components/site-wrapper"
 import { StockProvider, useStocks } from "@/context/stock-context"
 import { StockChart } from "@/components/stock-chart"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Toggle } from "@/components/ui/toggle"
 import { StockSearch } from "@/components/stock-search"
@@ -44,9 +44,18 @@ function StockDetails() {
       setStock(stockData)
       
       const histData = await getHistoricalData(symbol, timeframe)
-      setHistoricalData(histData)
+      // Ensure histData is valid before setting state
+      if (Array.isArray(histData) && histData.length > 0) {
+        setHistoricalData(histData)
+      } else {
+        console.warn("Received empty or invalid historical data")
+        // Keep previous data or set empty array if none exists
+        setHistoricalData(prev => prev.length > 0 ? prev : [])
+      }
     } catch (error) {
       console.error("Error fetching stock data:", error)
+      // Keep the previous data if there was an error
+      // This prevents UI from breaking when API fails temporarily
     } finally {
       setIsRefreshing(false)
       setIsLoading(false)
@@ -98,13 +107,22 @@ function StockDetails() {
   };
 
   // Format large numbers with commas
-  const formatLargeNumber = (num: number): string => {
+  const formatLargeNumber = (num: number | undefined | null): string => {
+    if (typeof num !== 'number' || isNaN(num)) return "-";
     return num.toLocaleString('en-US');
   }
 
   // Calculate year-to-date return (mock function - would use real data in production)
   const calculateYTD = (): number => {
     return Math.random() * 20 - 10; // Random value between -10% and +10%
+  }
+
+  // Helper to safely format numbers
+  const safeToFixed = (value: number | undefined | null, digits = 2, fallback = "-") => {
+    if (typeof value === "number" && !isNaN(value)) {
+      return value.toFixed(digits)
+    }
+    return fallback
   }
 
   if (isLoading && !stock) {
@@ -199,7 +217,7 @@ function StockDetails() {
             transition={{ type: "spring", stiffness: 400, damping: 10 }}
           >
             <div className="flex items-center gap-2">
-              <div className="text-2xl sm:text-3xl font-bold">${stock.price.toFixed(2)}</div>
+              <div className="text-2xl sm:text-3xl font-bold">${safeToFixed(stock?.price)}</div>
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -221,13 +239,13 @@ function StockDetails() {
               ) : (
                 <ArrowDownRight className="mr-1 h-4 w-4 sm:h-5 sm:w-5" />
               )}
-              <span>{Math.abs(stock.change).toFixed(2)}</span>
+              <span>{safeToFixed(Math.abs(stock.change))}</span>
               <span className="ml-1">
-                ({Math.abs(stock.changePercent).toFixed(2)}%)
+                ({safeToFixed(Math.abs(stock.changePercent))}%)
               </span>
             </div>
             <div className={`text-xs mt-1 ${isPositiveYTD ? "text-green-500" : "text-red-500"}`}>
-              YTD: {isPositiveYTD ? "+" : ""}{ytdReturn.toFixed(2)}%
+              YTD: {isPositiveYTD ? "+" : ""}{safeToFixed(ytdReturn)}%
             </div>
           </motion.div>
         </motion.div>
@@ -265,7 +283,7 @@ function StockDetails() {
               whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
             >
               <p className="text-muted-foreground text-sm">Open</p>
-              <p className="font-medium">${stock.open?.toFixed(2) || "N/A"}</p>
+              <p className="font-medium">${safeToFixed(stock.open)}</p>
             </motion.div>
             <motion.div 
               className="border rounded-lg p-3 md:p-4 hover:bg-accent/50 transition-colors"
@@ -273,7 +291,7 @@ function StockDetails() {
               whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
             >
               <p className="text-muted-foreground text-sm">Previous Close</p>
-              <p className="font-medium">${stock.previousClose?.toFixed(2) || "N/A"}</p>
+              <p className="font-medium">${safeToFixed(stock.previousClose)}</p>
             </motion.div>
             <motion.div 
               className="border rounded-lg p-3 md:p-4 hover:bg-accent/50 transition-colors"
@@ -282,9 +300,7 @@ function StockDetails() {
             >
               <p className="text-muted-foreground text-sm">Day's Range</p>
               <p className="font-medium">
-                {stock.low && stock.high
-                  ? `$${stock.low.toFixed(2)} - $${stock.high.toFixed(2)}`
-                  : "N/A"}
+                ${safeToFixed(stock.low)} - ${safeToFixed(stock.high)}
               </p>
             </motion.div>
             <motion.div 
@@ -306,7 +322,7 @@ function StockDetails() {
               <p className="text-muted-foreground text-sm">Market Cap</p>
               <p className="font-medium">
                 {stock.marketCap 
-                  ? `$${(stock.marketCap / 1000000000).toFixed(2)}B` 
+                  ? `$${safeToFixed(stock.marketCap / 1000000000)}B` 
                   : "N/A"}
               </p>
             </motion.div>
@@ -317,7 +333,7 @@ function StockDetails() {
             >
               <p className="text-muted-foreground text-sm">52 Week High</p>
               <p className="font-medium">
-                ${(stock.price * (1 + Math.random() * 0.3)).toFixed(2)}
+                ${safeToFixed((stock.price * (1 + Math.random() * 0.3)))}
               </p>
             </motion.div>
             <motion.div 
@@ -327,7 +343,7 @@ function StockDetails() {
             >
               <p className="text-muted-foreground text-sm">52 Week Low</p>
               <p className="font-medium">
-                ${(stock.price * (1 - Math.random() * 0.3)).toFixed(2)}
+                ${safeToFixed((stock.price * (1 - Math.random() * 0.3)))}
               </p>
             </motion.div>
             <motion.div 

@@ -5,7 +5,7 @@ import TrendingStocks from "@/components/trending-stocks"
 import { StockProvider } from "@/context/stock-context"
 
 export const metadata: Metadata = {
-  title: "Stock Market Dashboard | Home",
+  title: "Dashboard | Home",
   description: "Track real-time stock market data with interactive charts and watch your favorite stocks",
 }
 
@@ -16,7 +16,7 @@ export default function HomePage() {
         <section className="space-y-6 md:space-y-8">
           <div className="text-center py-4 md:py-6 space-y-4">
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight">
-              Stock Market Dashboard
+              Dashboard
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto px-4">
               Track real-time stock market data with interactive charts. Search for stocks and add them to your watchlist.

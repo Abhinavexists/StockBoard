@@ -6,7 +6,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Stock Market Dashboard",
+  title: "StockBoard",
   description: "Track real-time stock market data with interactive charts",
 };
 

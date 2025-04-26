@@ -6,7 +6,6 @@ import { StockProvider } from "@/context/stock-context"
 import { StockData, StockHistoricalData, getStockQuote, getHistoricalData } from "@/lib/api"
 import { StockSearch } from "@/components/stock-search"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { 
   LineChart, 
   Line, 
@@ -17,9 +16,9 @@ import {
   Legend, 
   ResponsiveContainer 
 } from "recharts"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { motion, AnimatePresence } from "framer-motion"
-import { Trash2, BarChart3, Plus, LineChart as LineChartIcon, AlertTriangle } from "lucide-react"
+import { Trash2, BarChart3, LineChart as LineChartIcon } from "lucide-react"
 
 // Color palette for different stocks in the comparison chart
 const chartColors = [
