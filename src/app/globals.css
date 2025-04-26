@@ -1,0 +1,324 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom animation keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
+    --radius: 0.5rem;
+    --stock-positive: 142 71% 45%;
+    --stock-negative: 0 84% 60%;
+    /* Animation variables */
+    --animation-slow: 700ms;
+    --animation-medium: 400ms;
+    --animation-fast: 250ms;
+  }
+
+  /* Add transition to all color properties for smooth theme switching */
+  html {
+    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 500ms;
+    scroll-behavior: smooth;
+  }
+  
+  html * {
+    transition: background-color 500ms ease, 
+                border-color 500ms ease,
+                color 500ms ease,
+                fill 500ms ease,
+                stroke 500ms ease;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    --stock-positive: 142 71% 45%;
+    --stock-negative: 0 84% 60%;
+    --chart-1: 264 80% 60%;
+    --chart-2: 190 80% 60%;
+    --chart-3: 120 80% 60%;
+    --chart-4: 30 80% 60%;
+    --chart-5: 300 80% 60%;
+    --chart-6: 60 80% 60%;
+    --chart-7: 230 80% 60%;
+    --chart-8: 10 80% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    overflow-x: hidden;
+  }
+}
+
+/* Custom colors for stock indicators */
+.text-green-500 {
+  color: hsl(var(--stock-positive));
+}
+
+.text-red-500 {
+  color: hsl(var(--stock-negative));
+}
+
+/* Custom card styles */
+.card {
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+/* Stock card styles */
+.stock-card {
+  border-radius: 0.5rem;
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.stock-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.stock-card-header {
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.stock-card-body {
+  padding: 0 1rem 1rem;
+}
+
+.stock-price {
+  font-size: 1.5rem;
+  font-weight: 700;
+  transition: color 0.2s ease;
+}
+
+.stock-change-positive {
+  color: hsl(var(--stock-positive));
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+.stock-change-positive:hover {
+  transform: scale(1.05);
+}
+
+.stock-change-negative {
+  color: hsl(var(--stock-negative));
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+.stock-change-negative:hover {
+  transform: scale(1.05);
+}
+
+.stock-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  margin-top: 1rem;
+}
+
+.stock-detail-label {
+  color: hsl(var(--muted-foreground));
+}
+
+.view-details-button {
+  text-align: center;
+  padding: 0.5rem;
+  background-color: transparent;
+  color: hsl(var(--foreground));
+  width: 100%;
+  border-top: 1px solid hsl(var(--border));
+  font-size: 0.875rem;
+  transition: background-color 0.2s ease;
+}
+
+.view-details-button:hover {
+  background-color: hsl(var(--accent));
+}
+
+/* Animation utilities */
+.animate-fade-in {
+  animation: fadeIn var(--animation-medium) ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp var(--animation-medium) ease-out forwards;
+}
+
+.animate-slide-down {
+  animation: slideDown var(--animation-medium) ease-out forwards;
+}
+
+.animate-pulse {
+  animation: pulse 2s infinite;
+}
+
+.animate-delay-100 {
+  animation-delay: 100ms;
+}
+
+.animate-delay-200 {
+  animation-delay: 200ms;
+}
+
+.animate-delay-300 {
+  animation-delay: 300ms;
+}
+
+.animate-delay-400 {
+  animation-delay: 400ms;
+}
+
+.animate-delay-500 {
+  animation-delay: 500ms;
+}
+
+/* Loading shimmer effect */
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsla(var(--muted)) 0%,
+    hsla(var(--muted-foreground), 0.1) 50%,
+    hsla(var(--muted)) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Fix alignment in forms */
+input::placeholder {
+  @apply text-muted-foreground;
+}
+
+/* Responsive design improvements */
+@media (max-width: 640px) {
+  .recharts-wrapper {
+    font-size: 0.75rem;
+  }
+  
+  html {
+    font-size: 14px;
+  }
+  
+  .responsive-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  .responsive-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .responsive-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1025px) and (max-width: 1280px) {
+  .responsive-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.75rem;
+  }
+}
+
+@media (min-width: 1281px) {
+  .responsive-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+  }
+}
