@@ -81,7 +81,7 @@ export function Navbar() {
         <div className="flex items-center">
           <Link href="/" className="flex items-center gap-2 font-bold text-lg mr-6">
             <LineChart className="h-5 w-5" />
-            <span className="hidden md:inline-block">Stock Market</span>
+            <span className="hidden md:inline-block">StockBoard</span>
           </Link>
           
           <nav className="hidden md:flex items-center gap-5 text-sm">

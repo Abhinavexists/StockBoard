@@ -5,7 +5,7 @@ import TrendingStocks from "@/components/trending-stocks"
 import { StockSearch } from "@/components/stock-search"
 
 export const metadata: Metadata = {
-  title: "Stock Market Dashboard | Stocks",
+  title: "Dashboard | Stocks",
   description: "Browse and search for stocks to add to your watchlist",
 }
 

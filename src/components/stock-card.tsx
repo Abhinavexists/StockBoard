@@ -35,7 +35,8 @@ export function StockCard({ stock, showRemoveButton = false, onRemove }: StockCa
     }
   }
 
-  const formatNumber = (num: number) => {
+  const formatNumber = (num: number | undefined | null) => {
+    if (typeof num !== "number" || isNaN(num)) return "-";
     if (num >= 1_000_000_000_000) {
       return `$${(num / 1_000_000_000_000).toFixed(2)}T`
     } else if (num >= 1_000_000_000) {
@@ -47,7 +48,8 @@ export function StockCard({ stock, showRemoveButton = false, onRemove }: StockCa
     }
   }
 
-  const formatVolume = (volume: number) => {
+  const formatVolume = (volume: number | undefined | null) => {
+    if (typeof volume !== "number" || isNaN(volume)) return "-";
     if (volume >= 1_000_000_000) {
       return `${(volume / 1_000_000_000).toFixed(2)}B`
     } else if (volume >= 1_000_000) {
@@ -57,6 +59,14 @@ export function StockCard({ stock, showRemoveButton = false, onRemove }: StockCa
     } else {
       return volume.toLocaleString()
     }
+  }
+
+  // Helper to safely format numbers
+  const safeToFixed = (value: number | undefined | null, digits = 2, fallback = "-") => {
+    if (typeof value === "number" && !isNaN(value)) {
+      return value.toFixed(digits)
+    }
+    return fallback
   }
 
   // Card animation variants
@@ -153,23 +163,23 @@ export function StockCard({ stock, showRemoveButton = false, onRemove }: StockCa
                 className="text-2xl font-bold"
                 variants={priceVariants}
               >
-                ${stock.price.toFixed(2)}
+                ${safeToFixed(stock.price, 2)}
               </motion.div>
               <motion.div
                 className={`flex items-center ${
-                  stock.change >= 0 ? "text-green-500" : "text-red-500"
+                  (typeof stock.change === "number" && stock.change >= 0) ? "text-green-500" : "text-red-500"
                 }`}
                 whileHover={{ scale: 1.1 }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
-                {stock.change >= 0 ? (
+                {(typeof stock.change === "number" && stock.change >= 0) ? (
                   <ArrowUpRight className="mr-1 h-4 w-4" />
                 ) : (
                   <ArrowDownRight className="mr-1 h-4 w-4" />
                 )}
-                <span>{Math.abs(stock.change).toFixed(2)}</span>
+                <span>{safeToFixed(Math.abs(stock.change), 2)}</span>
                 <span className="ml-1">
-                  ({Math.abs(stock.changePercent).toFixed(2)}%)
+                  ({safeToFixed(Math.abs(stock.changePercent), 2)}%)
                 </span>
               </motion.div>
             </motion.div>

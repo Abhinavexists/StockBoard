@@ -16,7 +16,7 @@ export function SiteWrapper({ children }: SiteWrapperProps) {
       </main>
       <footer className="border-t py-6 md:py-0">
         <div className="container flex flex-col md:flex-row justify-between items-center gap-4 px-4 sm:px-6 lg:px-8 text-sm text-muted-foreground">
-          <p>© 2023 Stock Market Dashboard. All rights reserved.</p>
+          <p>© 2025 StockBoard.</p>
           <p>
             Built with Next.js, Tailwind CSS, and ShadCN UI
           </p>

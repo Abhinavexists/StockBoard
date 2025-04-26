@@ -6,7 +6,6 @@ import { StockProvider } from "@/context/stock-context"
 import { StockData, StockHistoricalData, getStockQuote, getHistoricalData } from "@/lib/api"
 import { StockSearch } from "@/components/stock-search"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { 
   LineChart, 
   Line, 
@@ -17,9 +16,9 @@ import {
   Legend, 
   ResponsiveContainer 
 } from "recharts"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { motion, AnimatePresence } from "framer-motion"
-import { Trash2, BarChart3, Plus, LineChart as LineChartIcon, AlertTriangle } from "lucide-react"
+import { Trash2, BarChart3, LineChart as LineChartIcon } from "lucide-react"
 
 // Color palette for different stocks in the comparison chart
 const chartColors = [
@@ -102,7 +101,7 @@ function StockComparisonManager() {
     }
     
     updateAllHistoricalData()
-  }, [timeframe, comparedStocks.length])
+  }, [timeframe, comparedStocks])
   
   // Prepare data for the comparison chart
   const prepareChartData = () => {
@@ -127,11 +126,11 @@ function StockComparisonManager() {
     
     // Create combined data points
     return firstStockData.map((point, index) => {
-      const dataPoint: any = {
+      const dataPoint: Record<string, string | number> = {
         date: point.date,
       }
       
-      Object.keys(historicalData).forEach((symbol, symbolIndex) => {
+      Object.keys(historicalData).forEach((symbol) => {
         const data = historicalData[symbol]
         if (data && index < data.length) {
           if (normalizeData) {
@@ -158,14 +157,25 @@ function StockComparisonManager() {
     }
   }
   
+  // Define proper types for the tooltip
+  interface TooltipProps {
+    active?: boolean;
+    payload?: Array<{
+      value: number;
+      name: string;
+      color: string;
+    }>;
+    label?: string;
+  }
+  
   // Custom tooltip formatter
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-background border p-2 rounded shadow-lg">
           <p className="text-sm font-medium">{label}</p>
           <div className="space-y-1 mt-1">
-            {payload.map((entry: any, index: number) => (
+            {payload.map((entry, index) => (
               <div key={`item-${index}`} className="flex items-center gap-2">
                 <div 
                   className="h-2 w-2 rounded-full" 

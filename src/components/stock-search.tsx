@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { Search, Sparkles, ArrowUpRight, ArrowDownRight, TrendingUp } from "lucide-react"
+import { Search, TrendingUp } from "lucide-react"
 import { searchStocks, SearchResult, getTrendingStocks } from "@/lib/api"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
