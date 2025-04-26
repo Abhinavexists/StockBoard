@@ -23,7 +23,17 @@ interface StockChartProps {
 
 interface CustomTooltipProps {
   active?: boolean
-  payload?: any[]
+  payload?: Array<{
+    payload: {
+      date: string;
+      open: number;
+      high: number;
+      low: number;
+      close: number;
+      volume: number;
+      dateFormatted?: string;
+    }
+  }>
   label?: string
 }
 
@@ -74,6 +84,12 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 }
 
 export function StockChart({ data, symbol }: StockChartProps) {
+  // Helper function to safely format numbers for the axis
+  const safeFormatAxisValue = (value: number): string => {
+    if (typeof value !== 'number' || isNaN(value)) return "$0";
+    return `$${value.toFixed(0)}`;
+  };
+
   const formattedData = useMemo(() => {
     if (!data || data.length === 0) return []
     return [...data].map((item) => ({
@@ -175,7 +191,7 @@ export function StockChart({ data, symbol }: StockChartProps) {
                 tick={{ fontSize: 12 }}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(value) => `$${value.toFixed(0)}`}
+                tickFormatter={safeFormatAxisValue}
                 width={60}
               />
               <Tooltip content={<CustomTooltip />} />
